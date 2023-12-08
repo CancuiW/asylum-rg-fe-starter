@@ -72,6 +72,7 @@ function GraphWrapper(props) {
                                    -- Mack 
     
     */
+    //`${process.env.REACT_APP_API_URI}/fiscalSummary`
 
     if (office === 'all' || !office) {
       axios
@@ -83,6 +84,7 @@ function GraphWrapper(props) {
           },
         })
         .then(result => {
+          console.log(result);
           stateSettingCallback(view, office, test_data); // <-- `test_data` here can be simply replaced by `result.data` in prod!
         })
         .catch(err => {
@@ -122,6 +124,7 @@ function GraphWrapper(props) {
     >
       <ScrollToTopOnMount />
       {map_to_render}
+      {/* 下面就是旁边的buttons */}
       <div
         className="user-input-sidebar-container"
         style={{
