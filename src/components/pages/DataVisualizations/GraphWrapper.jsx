@@ -10,7 +10,7 @@ import YearLimitsSelect from './YearLimitsSelect';
 import ViewSelect from './ViewSelect';
 import axios from 'axios';
 import { resetVisualizationQuery } from '../../../state/actionCreators';
-import test_data from '../../../data/test_data.json';
+//import test_data from '../../../data/test_data.json';
 import { colors } from '../../../styles/data_vis_colors';
 import ScrollToTopOnMount from '../../../utils/scrollToTopOnMount';
 
@@ -73,40 +73,40 @@ function GraphWrapper(props) {
     
     */
     //`${process.env.REACT_APP_API_URI}/fiscalSummary`
-
-    if (office === 'all' || !office) {
-      axios
-        .get(process.env.REACT_APP_API_URI, {
-          // mock URL, can be simply replaced by `${Real_Production_URL}/summary` in prod!
-          params: {
-            from: years[0],
-            to: years[1],
-          },
-        })
-        .then(result => {
-          console.log(result);
-          stateSettingCallback(view, office, test_data); // <-- `test_data` here can be simply replaced by `result.data` in prod!
-        })
-        .catch(err => {
-          console.error(err);
-        });
-    } else {
-      axios
-        .get(process.env.REACT_APP_API_URI, {
-          // mock URL, can be simply replaced by `${Real_Production_URL}/summary` in prod!
-          params: {
-            from: years[0],
-            to: years[1],
-            office: office,
-          },
-        })
-        .then(result => {
-          stateSettingCallback(view, office, test_data); // <-- `test_data` here can be simply replaced by `result.data` in prod!
-        })
+    async function fetchCitizenshipData() {
+      return axios
+        .get(`${process.env.REACT_APP_API_URI}/citizenshipSummary`)
+        .then(result => result.data)
         .catch(err => {
           console.error(err);
         });
     }
+
+    async function fetchDataAndSetState() {
+      try {
+        let citizenshipData = await fetchCitizenshipData();
+
+        axios
+          .get(`${process.env.REACT_APP_API_URI}/fiscalSummary`, {
+            params: {
+              from: years[0],
+              to: years[1],
+              office: office,
+            },
+          })
+          .then(result => {
+            stateSettingCallback(view, office, [result.data], citizenshipData);
+          })
+          .catch(err => {
+            console.error(err);
+          });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    // call the async function
+    fetchDataAndSetState();
   }
   const clearQuery = (view, office) => {
     dispatch(resetVisualizationQuery(view, office));
@@ -124,7 +124,6 @@ function GraphWrapper(props) {
     >
       <ScrollToTopOnMount />
       {map_to_render}
-      {/* 下面就是旁边的buttons */}
       <div
         className="user-input-sidebar-container"
         style={{
@@ -135,7 +134,9 @@ function GraphWrapper(props) {
           justifyContent: 'center',
         }}
       >
+        {/* display the buttons of 'view' */}
         <ViewSelect set_view={set_view} />
+        {/* display the buttons of query */}
         <YearLimitsSelect
           view={view}
           office={office}
